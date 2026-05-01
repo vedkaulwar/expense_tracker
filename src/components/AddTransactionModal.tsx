@@ -92,7 +92,7 @@ export default function AddTransactionModal({
               <button 
                 type="button"
                 onClick={() => {
-                  const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+                  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
                   if (!SpeechRecognition) return alert("Voice input not supported in this browser.");
                   
                   const recognition = new SpeechRecognition();
