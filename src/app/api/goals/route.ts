@@ -1,15 +1,38 @@
 import { NextResponse } from "next/server";
-import connectToDatabase from "@/lib/db";
-import Goal from "@/models/Goal";
+import { adminDb, adminAuth } from "@/lib/firebase-admin";
+import { cookies } from "next/headers";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
+async function getUserId() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("session")?.value;
+  if (!token) return null;
   try {
-    const db = await connectToDatabase();
-    if (!db) return NextResponse.json({ goals: [], mockMode: true });
+    const decoded = await adminAuth.verifyIdToken(token);
+    return decoded.uid;
+  } catch {
+    return null;
+  }
+}
 
-    const goals = await Goal.find().sort({ createdAt: -1 });
+export async function GET() {
+  try {
+    const userId = await getUserId();
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const snapshot = await adminDb
+      .collection("users")
+      .doc(userId)
+      .collection("goals")
+      .orderBy("createdAt", "desc")
+      .get();
+
+    const goals = snapshot.docs.map(doc => ({
+      _id: doc.id,
+      ...doc.data()
+    }));
+
     return NextResponse.json(goals);
   } catch (error) {
     console.error("GET Goals Error:", error);
@@ -19,15 +42,22 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const db = await connectToDatabase();
+    const userId = await getUserId();
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const body = await request.json();
+    const goalData = {
+      ...body,
+      createdAt: new Date(),
+    };
 
-    if (!db) return NextResponse.json({ message: "Mock mode: Goal saved", goal: body });
+    const docRef = await adminDb
+      .collection("users")
+      .doc(userId)
+      .collection("goals")
+      .add(goalData);
 
-    const newGoal = new Goal(body);
-    await newGoal.save();
-
-    return NextResponse.json(newGoal, { status: 201 });
+    return NextResponse.json({ _id: docRef.id, ...goalData }, { status: 201 });
   } catch (error) {
     console.error("POST Goal Error:", error);
     return NextResponse.json({ error: "Failed to create goal" }, { status: 500 });

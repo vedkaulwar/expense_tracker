@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, TrendingUp, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,23 +21,29 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+      const token = await userCredential.user.getIdToken();
+
+      // Set session cookie via API
+      const res = await fetch("/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ token }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || "Login failed");
-        return;
+        throw new Error("Failed to create session");
       }
 
       router.push("/");
       router.refresh();
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Login failed. Check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -43,7 +51,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
-      {/* Background glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" />
@@ -55,7 +62,6 @@ export default function LoginPage() {
         transition={{ duration: 0.5 }}
         className="w-full max-w-md relative z-10"
       >
-        {/* Logo */}
         <div className="flex items-center gap-3 justify-center mb-8">
           <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center">
             <TrendingUp size={22} className="text-black" />
@@ -63,7 +69,6 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-white tracking-tight">ExpenseAI</h1>
         </div>
 
-        {/* Card */}
         <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-8 backdrop-blur-sm shadow-2xl">
           <h2 className="text-2xl font-bold text-white mb-1">Welcome back</h2>
           <p className="text-zinc-400 text-sm mb-8">Sign in to your account to continue</p>

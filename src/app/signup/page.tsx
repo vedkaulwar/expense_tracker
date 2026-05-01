@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, TrendingUp, ArrowRight, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -20,23 +22,33 @@ export default function SignupPage() {
     setError("");
 
     try {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+      
+      await updateProfile(userCredential.user, {
+        displayName: formData.name
       });
 
-      const data = await res.json();
+      const token = await userCredential.user.getIdToken();
 
-      if (!res.ok) {
-        setError(data.error || "Signup failed");
-        return;
-      }
+      // Set session cookie via API
+      await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
 
       setSuccess(true);
-      setTimeout(() => router.push("/login"), 2000);
-    } catch {
-      setError("Something went wrong. Please try again.");
+      setTimeout(() => {
+        router.push("/");
+        router.refresh();
+      }, 1500);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Signup failed. Try a different email.");
     } finally {
       setLoading(false);
     }
@@ -71,7 +83,7 @@ export default function SignupPage() {
             >
               <CheckCircle2 size={52} className="text-emerald-500 mx-auto mb-4" />
               <h2 className="text-xl font-bold text-white mb-2">Account Created!</h2>
-              <p className="text-zinc-400 text-sm">Redirecting you to login...</p>
+              <p className="text-zinc-400 text-sm">Welcome, {formData.name}. Redirecting...</p>
             </motion.div>
           ) : (
             <>

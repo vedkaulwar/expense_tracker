@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Expense Tracker | Smart FinTech",
+  title: "ExpenseAI | Smart FinTech",
   description: "Modern, automated expense tracking for Indians with SMS parsing, AI insights, and impulse control.",
 };
 

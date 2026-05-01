@@ -1,15 +1,38 @@
 import { NextResponse } from "next/server";
-import connectToDatabase from "@/lib/db";
-import Subscription from "@/models/Subscription";
+import { adminDb, adminAuth } from "@/lib/firebase-admin";
+import { cookies } from "next/headers";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
+async function getUserId() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("session")?.value;
+  if (!token) return null;
   try {
-    const db = await connectToDatabase();
-    if (!db) return NextResponse.json({ subscriptions: [], mockMode: true });
+    const decoded = await adminAuth.verifyIdToken(token);
+    return decoded.uid;
+  } catch {
+    return null;
+  }
+}
 
-    const subscriptions = await Subscription.find().sort({ nextBillingDate: 1 });
+export async function GET() {
+  try {
+    const userId = await getUserId();
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const snapshot = await adminDb
+      .collection("users")
+      .doc(userId)
+      .collection("subscriptions")
+      .orderBy("nextBillingDate", "asc")
+      .get();
+
+    const subscriptions = snapshot.docs.map(doc => ({
+      _id: doc.id,
+      ...doc.data()
+    }));
+
     return NextResponse.json(subscriptions);
   } catch (error) {
     console.error("GET Subscriptions Error:", error);
@@ -19,15 +42,23 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const db = await connectToDatabase();
+    const userId = await getUserId();
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const body = await request.json();
+    const subData = {
+      ...body,
+      nextBillingDate: body.nextBillingDate ? new Date(body.nextBillingDate) : new Date(),
+      createdAt: new Date(),
+    };
 
-    if (!db) return NextResponse.json({ message: "Mock mode: Subscription saved", subscription: body });
+    const docRef = await adminDb
+      .collection("users")
+      .doc(userId)
+      .collection("subscriptions")
+      .add(subData);
 
-    const newSub = new Subscription(body);
-    await newSub.save();
-
-    return NextResponse.json(newSub, { status: 201 });
+    return NextResponse.json({ _id: docRef.id, ...subData }, { status: 201 });
   } catch (error) {
     console.error("POST Subscription Error:", error);
     return NextResponse.json({ error: "Failed to create subscription" }, { status: 500 });

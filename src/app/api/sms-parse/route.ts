@@ -1,22 +1,32 @@
 import { NextResponse } from "next/server";
-import connectToDatabase from "@/lib/db";
-import Transaction from "@/models/Transaction";
+import { adminDb, adminAuth } from "@/lib/firebase-admin";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
+async function getUserId() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("session")?.value;
+  if (!token) return null;
+  try {
+    const decoded = await adminAuth.verifyIdToken(token);
+    return decoded.uid;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: Request) {
   try {
+    const userId = await getUserId();
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const { smsText } = await request.json();
 
     if (!smsText) {
       return NextResponse.json({ error: "SMS text is required" }, { status: 400 });
     }
 
-    // A basic simulation of parsing an Indian Bank SMS
-    // Example: "Rs.500 debited via UPI to Swiggy on 12-10-2023"
-    // Example 2: "INR 1200.00 spent on Card ending 1234 at Amazon"
-    
-    // Very basic regex to simulate extraction
     const amountMatch = smsText.match(/(?:Rs\.?|INR)\s*([\d,]+\.?\d*)/i);
     const amount = amountMatch ? parseFloat(amountMatch[1].replace(/,/g, "")) : 0;
 
@@ -31,7 +41,6 @@ export async function POST(request: Request) {
       type = "income";
     }
 
-    // Auto category detection
     let category = "Others";
     const lowerMerchant = merchant.toLowerCase();
     if (lowerMerchant.includes("swiggy") || lowerMerchant.includes("zomato") || lowerMerchant.includes("mcdonalds")) category = "Food 🍔";
@@ -43,7 +52,6 @@ export async function POST(request: Request) {
     if (/card/i.test(smsText)) paymentMethod = "Card";
     else if (/bank transfer|neft|rtgs|imps/i.test(smsText)) paymentMethod = "Bank Transfer";
     
-    // Default to saving the transaction
     const parsedData = {
       amount,
       merchant,
@@ -52,17 +60,18 @@ export async function POST(request: Request) {
       source: "sms",
       status: "completed",
       paymentMethod,
-      notes: smsText.substring(0, 50) + "..."
+      notes: smsText.substring(0, 50) + "...",
+      date: new Date(),
+      createdAt: new Date()
     };
 
-    const db = await connectToDatabase();
-    if (db) {
-      const newTransaction = new Transaction(parsedData);
-      await newTransaction.save();
-      return NextResponse.json({ success: true, transaction: newTransaction }, { status: 201 });
-    } else {
-      return NextResponse.json({ success: true, mockMode: true, transaction: parsedData });
-    }
+    const docRef = await adminDb
+      .collection("users")
+      .doc(userId)
+      .collection("transactions")
+      .add(parsedData);
+
+    return NextResponse.json({ success: true, transaction: { _id: docRef.id, ...parsedData } }, { status: 201 });
 
   } catch (error) {
     console.error("SMS Parse Error:", error);
