@@ -2,10 +2,11 @@
 
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { Coffee, ShoppingBag, Car, Zap, HelpCircle, ArrowUpRight, ArrowDownLeft, Clock } from "lucide-react";
+import { Coffee, ShoppingBag, ShoppingCart, Car, Zap, HelpCircle, Clock } from "lucide-react";
 
 const getCategoryIcon = (category: string) => {
   if (category.includes("Food")) return <Coffee size={18} className="text-orange-400" />;
+  if (category.includes("Grocery") || category.includes("Home")) return <ShoppingCart size={18} className="text-green-400" />;
   if (category.includes("Shopping")) return <ShoppingBag size={18} className="text-pink-400" />;
   if (category.includes("Travel")) return <Car size={18} className="text-blue-400" />;
   if (category.includes("Bills")) return <Zap size={18} className="text-yellow-400" />;
