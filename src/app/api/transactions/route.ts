@@ -19,6 +19,8 @@ async function getUserId() {
 export async function GET(request: Request) {
   try {
     const userId = await getUserId();
+    console.log("DEBUG: GET Transactions for user:", userId);
+    
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -34,29 +36,33 @@ export async function GET(request: Request) {
       .limit(limitCount)
       .get();
 
+    console.log("DEBUG: Found transactions count:", snapshot.size);
+
     const transactions = snapshot.docs.map(doc => ({
       _id: doc.id,
       ...doc.data(),
-      date: doc.data().date?.toDate?.() || doc.data().date, // Convert Firestore timestamp to JS date
+      date: doc.data().date?.toDate?.() || doc.data().date,
     }));
 
     return NextResponse.json(transactions);
-  } catch (error) {
+  } catch (error: any) {
     console.error("GET Transactions Error:", error);
-    return NextResponse.json({ error: "Failed to fetch transactions" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Failed to fetch transactions" }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
     const userId = await getUserId();
+    console.log("DEBUG: POST Transaction for user:", userId);
+
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
+    console.log("DEBUG: Posting data:", body);
     
-    // Ensure date is a Date object or Firestore Timestamp
     const transactionData = {
       ...body,
       date: body.date ? new Date(body.date) : new Date(),
@@ -69,9 +75,11 @@ export async function POST(request: Request) {
       .collection("transactions")
       .add(transactionData);
 
+    console.log("DEBUG: Created doc ID:", docRef.id);
+
     return NextResponse.json({ _id: docRef.id, ...transactionData }, { status: 201 });
-  } catch (error) {
+  } catch (error: any) {
     console.error("POST Transaction Error:", error);
-    return NextResponse.json({ error: "Failed to create transaction" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Failed to create transaction" }, { status: 500 });
   }
 }
