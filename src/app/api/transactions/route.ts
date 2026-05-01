@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import Transaction from "@/models/Transaction";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     const db = await connectToDatabase();

@@ -4,6 +4,10 @@ import { motion } from "framer-motion";
 import { ArrowUpRight, ArrowDownRight, Wallet, CreditCard, TrendingUp } from "lucide-react";
 
 export default function DashboardStats({ transactions }: { transactions: any[] }) {
+  const totalIncome = transactions.filter(t => t.type === "income").reduce((acc, t) => acc + t.amount, 0);
+  const totalExpense = transactions.filter(t => t.type === "expense").reduce((acc, t) => acc + t.amount, 0);
+  const totalBalance = totalIncome - totalExpense;
+
   const currentMonthExpenses = transactions
     .filter(t => t.type === "expense" && new Date(t.date).getMonth() === new Date().getMonth())
     .reduce((acc, curr) => acc + curr.amount, 0);
@@ -30,10 +34,10 @@ export default function DashboardStats({ transactions }: { transactions: any[] }
           <Wallet size={80} />
         </div>
         <p className="text-sm text-zinc-400 font-medium mb-1">Total Balance</p>
-        <h2 className="text-3xl font-bold tracking-tight mb-2">₹1,24,500</h2>
+        <h2 className="text-3xl font-bold tracking-tight mb-2">₹{totalBalance.toLocaleString("en-IN")}</h2>
         <div className="flex items-center text-xs text-emerald-500 bg-emerald-500/10 w-fit px-2 py-1 rounded-full">
           <ArrowUpRight size={14} className="mr-1" />
-          <span>+2.4% vs last month</span>
+          <span>Available Balance</span>
         </div>
       </motion.div>
 
@@ -64,8 +68,14 @@ export default function DashboardStats({ transactions }: { transactions: any[] }
           <TrendingUp size={80} />
         </div>
         <p className="text-sm text-emerald-400/80 font-medium mb-1">AI Insight</p>
-        <h3 className="text-lg font-semibold leading-tight mt-2 text-white/90">
-          "You spend 40% more on food during weekends. Consider meal prepping."
+        <h3 className="text-base font-medium leading-relaxed mt-2 text-white/90">
+          {totalExpense === 0
+            ? "Add your first expense to get personalized AI insights! 💡"
+            : totalIncome === 0
+            ? "Add your income to track your balance. Tap + Add Transaction → Income."
+            : totalBalance < 0
+            ? `⚠️ You've spent ₹${Math.abs(totalBalance).toLocaleString("en-IN")} more than your income this period!`
+            : `You have ₹${totalBalance.toLocaleString("en-IN")} available. You've saved ${((totalBalance / totalIncome) * 100).toFixed(0)}% of income! 🎉`}
         </h3>
       </motion.div>
     </div>

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { X, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import ReceiptScanner from "./ReceiptScanner";
 
 export default function AddTransactionModal({ 
   isOpen, 
@@ -32,6 +31,7 @@ export default function AddTransactionModal({
     try {
       const payload = {
         ...formData,
+        merchant: formData.merchant || (formData.type === "income" ? "Income Source" : "Unknown Merchant"),
         amount: parseFloat(formData.amount),
         source: "manual",
         status: isDelayed ? "pending_24h_delay" : "completed"
@@ -45,7 +45,6 @@ export default function AddTransactionModal({
 
       onAdded();
       onClose();
-      // Reset
       setFormData({
         amount: "", merchant: "", category: "Food 🍔", type: "expense", paymentMethod: "UPI", notes: ""
       });
@@ -81,41 +80,6 @@ export default function AddTransactionModal({
               </button>
             </div>
 
-            <ReceiptScanner 
-              onScanComplete={(amount, merchant) => {
-                if (amount) setFormData(f => ({ ...f, amount }));
-                if (merchant) setFormData(f => ({ ...f, merchant: merchant.substring(0, 30) }));
-              }} 
-            />
-
-            <div className="mb-4">
-              <button 
-                type="button"
-                onClick={() => {
-                  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-                  if (!SpeechRecognition) return alert("Voice input not supported in this browser.");
-                  
-                  const recognition = new SpeechRecognition();
-                  recognition.onstart = () => alert("Listening... Say something like 'Spent 500 on Swiggy'");
-                  recognition.onresult = (e: any) => {
-                    const text = e.results[0][0].transcript.toLowerCase();
-                    const amountMatch = text.match(/\d+/);
-                    if (amountMatch) setFormData(f => ({ ...f, amount: amountMatch[0] }));
-                    
-                    if (text.includes("food") || text.includes("swiggy") || text.includes("zomato")) {
-                      setFormData(f => ({ ...f, category: "Food 🍔", merchant: "Food Delivery" }));
-                    } else if (text.includes("travel") || text.includes("uber") || text.includes("cab")) {
-                      setFormData(f => ({ ...f, category: "Travel 🚗", merchant: "Cab" }));
-                    }
-                  };
-                  recognition.start();
-                }}
-                className="w-full bg-blue-500/10 text-blue-400 border border-blue-500/20 py-2 rounded-xl text-sm font-medium flex items-center justify-center gap-2 hover:bg-blue-500/20 transition"
-              >
-                🎙️ Tap to Speak (e.g. "Spent 500 on Swiggy")
-              </button>
-            </div>
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex gap-4">
                 <div className="flex-1">
@@ -126,7 +90,7 @@ export default function AddTransactionModal({
                     onChange={(e) => setFormData({...formData, type: e.target.value})}
                   >
                     <option value="expense">Expense</option>
-                    <option value="income">Income</option>
+                    <option value="income">Income (Credited)</option>
                   </select>
                 </div>
                 <div className="flex-1">
@@ -143,12 +107,11 @@ export default function AddTransactionModal({
               </div>
 
               <div>
-                <label className="block text-xs text-zinc-400 mb-1">Merchant / Title</label>
+                <label className="block text-xs text-zinc-400 mb-1">Merchant / Title (Optional)</label>
                 <input 
                   type="text" 
-                  required
                   className="w-full bg-zinc-800 border-none rounded-xl p-3 text-white focus:ring-1 focus:ring-emerald-500"
-                  placeholder="e.g. Swiggy, Amazon"
+                  placeholder={formData.type === "income" ? "e.g. Salary, Friend" : "e.g. Swiggy, Amazon"}
                   value={formData.merchant}
                   onChange={(e) => setFormData({...formData, merchant: e.target.value})}
                 />
@@ -163,6 +126,7 @@ export default function AddTransactionModal({
                     onChange={(e) => setFormData({...formData, category: e.target.value})}
                   >
                     <option>Food 🍔</option>
+                    <option>Home/Grocery 🛒</option>
                     <option>Travel 🚗</option>
                     <option>Shopping 🛍️</option>
                     <option>Bills 💡</option>

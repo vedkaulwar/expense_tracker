@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import Goal from "@/models/Goal";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     const db = await connectToDatabase();
