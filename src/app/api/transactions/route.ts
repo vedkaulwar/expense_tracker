@@ -7,22 +7,23 @@ export const dynamic = 'force-dynamic';
 async function getUserId() {
   const cookieStore = await cookies();
   const token = cookieStore.get("session")?.value;
-  if (!token) return null;
+  if (!token) return { uid: null, error: "No session token" };
   try {
     const decoded = await adminAuth.verifyIdToken(token);
-    return decoded.uid;
-  } catch {
-    return null;
+    return { uid: decoded.uid, error: null };
+  } catch (err: any) {
+    console.error("Token verification failed:", err.message);
+    return { uid: null, error: err.message };
   }
 }
 
 export async function GET(request: Request) {
   try {
-    const userId = await getUserId();
+    const { uid: userId, error: authError } = await getUserId();
     console.log("DEBUG: GET Transactions for user:", userId);
     
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: authError || "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -53,11 +54,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const userId = await getUserId();
+    const { uid: userId, error: authError } = await getUserId();
     console.log("DEBUG: POST Transaction for user:", userId);
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: authError || "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
