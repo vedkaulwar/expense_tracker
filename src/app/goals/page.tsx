@@ -6,7 +6,7 @@ import { Plus, Target, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function GoalsPage() {
-  const [goals, setGoals] = useState([]);
+  const [goals, setGoals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchGoals = async () => {

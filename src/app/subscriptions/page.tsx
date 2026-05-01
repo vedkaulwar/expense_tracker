@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { motion } from "framer-motion";
 
 export default function SubscriptionsPage() {
-  const [subs, setSubs] = useState([]);
+  const [subs, setSubs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchSubs = async () => {

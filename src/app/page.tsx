@@ -11,7 +11,7 @@ import * as XLSX from "xlsx";
 import { Plus, Download } from "lucide-react";
 
 export default function Home() {
-  const [transactions, setTransactions] = useState([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
