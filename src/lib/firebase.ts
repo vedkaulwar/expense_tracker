@@ -1,6 +1,10 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
+if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+  console.error("Firebase Client Environment Variables are missing! Check your .env.local and Vercel settings.");
+}
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
