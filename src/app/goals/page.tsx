@@ -1,12 +1,6 @@
-// Triggering a fresh Vercel build
 "use client";
 
 import { useState, useEffect } from "react";
-import Sidebar from "@/components/Sidebar";
-import MobileNav from "@/components/MobileNav";
-import { Plus, Target, Trophy, Pencil, Trash2 } from "lucide-react";
-import { motion } from "framer-motion";
-
 import Sidebar from "@/components/Sidebar";
 import MobileNav from "@/components/MobileNav";
 import AddGoalModal from "@/components/AddGoalModal";
