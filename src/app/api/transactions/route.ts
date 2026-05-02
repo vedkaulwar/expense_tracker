@@ -9,7 +9,7 @@ async function getUserId() {
   const token = cookieStore.get("session")?.value;
   if (!token) return { uid: null, error: "No session token" };
   try {
-    const decoded = await adminAuth.verifySessionCookie(token, true);
+    const decoded = await adminAuth.verifyToken(token);
     return { uid: decoded.uid, error: null };
   } catch (err: any) {
     console.error("Session verification failed:", err.message);

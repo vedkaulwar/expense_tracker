@@ -62,6 +62,22 @@ export const adminAuth = {
     if (!app) throw new Error("Firebase Admin SDK not initialized. Check your FIREBASE_PRIVATE_KEY.");
     return admin.auth(app).verifySessionCookie(sessionCookie, checkRevoked);
   },
+  /**
+   * Unified verifier: handles BOTH old raw ID tokens and new Firebase session cookies.
+   * Old sessions (pre-migration) use ID tokens (iss: securetoken.google.com).
+   * New sessions use session cookies (iss: session.firebase.google.com).
+   * Trying session cookie first is faster for new users; falls back for legacy.
+   */
+  verifyToken: async (token: string) => {
+    if (!app) throw new Error("Firebase Admin SDK not initialized. Check your FIREBASE_PRIVATE_KEY.");
+    try {
+      // Try as a Firebase session cookie first (new format, 5-day sessions)
+      return await admin.auth(app).verifySessionCookie(token, true);
+    } catch {
+      // Fall back to raw ID token (old format, 1-hour sessions)
+      return await admin.auth(app).verifyIdToken(token);
+    }
+  },
   getUser: async (uid: string) => {
     if (!app) throw new Error("Firebase Admin SDK not initialized. Check your FIREBASE_PRIVATE_KEY.");
     return admin.auth(app).getUser(uid);
