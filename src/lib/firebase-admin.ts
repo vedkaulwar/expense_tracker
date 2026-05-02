@@ -84,10 +84,13 @@ export const adminAuth = {
   },
 };
 
+import { getFirestore } from "firebase-admin/firestore";
+
 export const adminDb = {
   collection: (name: string) => {
     if (!app) throw new Error("Firebase Admin SDK not initialized. Check your FIREBASE_PRIVATE_KEY.");
-    return admin.firestore(app).collection(name);
+    // The database was named "default" without parentheses instead of "(default)"
+    return getFirestore(app, "default").collection(name);
   },
 } as unknown as admin.firestore.Firestore;
 
