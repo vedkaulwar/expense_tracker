@@ -19,12 +19,35 @@ export default function SubscriptionsPage() {
       setLoading(true);
       const res = await fetch("/api/subscriptions");
       const data = await res.json();
-      if (Array.isArray(data)) setSubs(data);
-      else if (data.subscriptions) setSubs(data.subscriptions);
+      
+      // Ensure data is an array
+      let subsList = [];
+      if (Array.isArray(data)) subsList = data;
+      else if (data && Array.isArray(data.subscriptions)) subsList = data.subscriptions;
+      
+      setSubs(subsList);
     } catch (e) {
-      console.error(e);
+      console.error("Fetch subs error:", e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const formatDate = (dateValue: any) => {
+    try {
+      if (!dateValue) return "N/A";
+      
+      // Handle Firestore Timestamp { _seconds, _nanoseconds }
+      if (dateValue && typeof dateValue === 'object' && '_seconds' in dateValue) {
+        return format(new Date(dateValue._seconds * 1000), "MMM dd, yyyy");
+      }
+      
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return "Invalid Date";
+      
+      return format(date, "MMM dd, yyyy");
+    } catch (err) {
+      return "Error";
     }
   };
 
@@ -122,11 +145,11 @@ export default function SubscriptionsPage() {
                     </td>
                     <td className="px-6 py-4 hidden md:table-cell capitalize">{sub.billingCycle}</td>
                     <td className="px-6 py-4 text-zinc-300">
-                      {format(new Date(sub.nextBillingDate), "MMM dd, yyyy")}
+                      {formatDate(sub.nextBillingDate)}
                     </td>
                     <td className="px-6 py-4 text-right font-semibold text-white">
                       <div className="flex items-center justify-end gap-3">
-                        <span>₹{sub.amount.toLocaleString("en-IN")}</span>
+                        <span>₹{(sub.amount || 0).toLocaleString("en-IN")}</span>
                         <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
                           <button 
                             onClick={() => handleEditSub(sub)}

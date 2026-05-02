@@ -5,12 +5,27 @@ import { format } from "date-fns";
 import { Coffee, ShoppingBag, ShoppingCart, Car, Zap, HelpCircle, Clock, Pencil, Trash2 } from "lucide-react";
 
 const getCategoryIcon = (category: string) => {
+  if (!category) return <HelpCircle size={18} className="text-zinc-400" />;
   if (category.includes("Food")) return <Coffee size={18} className="text-orange-400" />;
   if (category.includes("Grocery") || category.includes("Home")) return <ShoppingCart size={18} className="text-green-400" />;
   if (category.includes("Shopping")) return <ShoppingBag size={18} className="text-pink-400" />;
   if (category.includes("Travel")) return <Car size={18} className="text-blue-400" />;
   if (category.includes("Bills")) return <Zap size={18} className="text-yellow-400" />;
   return <HelpCircle size={18} className="text-zinc-400" />;
+};
+
+const formatDate = (dateValue: any) => {
+  try {
+    if (!dateValue) return "N/A";
+    if (dateValue && typeof dateValue === 'object' && '_seconds' in dateValue) {
+      return format(new Date(dateValue._seconds * 1000), "MMM dd, yyyy");
+    }
+    const date = new Date(dateValue);
+    if (isNaN(date.getTime())) return "Invalid Date";
+    return format(date, "MMM dd, yyyy");
+  } catch (err) {
+    return "Error";
+  }
 };
 
 export default function TransactionList({ 
@@ -73,7 +88,7 @@ export default function TransactionList({
                     {tx.merchant}
                   </h4>
                   <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
-                    <span>{format(new Date(tx.date), "MMM dd, yyyy")}</span>
+                    <span>{formatDate(tx.date)}</span>
                     <span>•</span>
                     <span className="bg-zinc-800 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider">
                       {tx.paymentMethod}
@@ -89,7 +104,7 @@ export default function TransactionList({
 
               <div className="flex items-center gap-4">
                 <div className={`font-semibold flex items-center gap-1 ${tx.type === "expense" ? "text-white" : "text-emerald-500"}`}>
-                  {tx.type === "expense" ? "-" : "+"}₹{tx.amount.toLocaleString("en-IN")}
+                  {tx.type === "expense" ? "-" : "+"}₹{(tx.amount || 0).toLocaleString("en-IN")}
                 </div>
                 
                 {/* Action Buttons (visible on hover) */}

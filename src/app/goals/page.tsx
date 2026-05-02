@@ -18,10 +18,14 @@ export default function GoalsPage() {
       setLoading(true);
       const res = await fetch("/api/goals");
       const data = await res.json();
-      if (Array.isArray(data)) setGoals(data);
-      else if (data.goals) setGoals(data.goals);
+      
+      let goalsList = [];
+      if (Array.isArray(data)) goalsList = data;
+      else if (data && Array.isArray(data.goals)) goalsList = data.goals;
+      
+      setGoals(goalsList);
     } catch (e) {
-      console.error(e);
+      console.error("Fetch goals error:", e);
     } finally {
       setLoading(false);
     }
@@ -75,7 +79,8 @@ export default function GoalsPage() {
             <div className="col-span-full py-10 text-center text-zinc-500">No goals found. Create one to get started!</div>
           ) : (
             goals.map((g: any, idx) => {
-              const percent = Math.min((g.currentAmount / g.targetAmount) * 100, 100);
+              const target = g.targetAmount || 1; // Avoid division by zero
+              const percent = Math.min(((g.currentAmount || 0) / target) * 100, 100);
               return (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -100,9 +105,9 @@ export default function GoalsPage() {
                   </div>
 
                   <div className="text-4xl mb-4">{g.icon}</div>
-                  <h3 className="text-xl font-bold mb-1">{g.name}</h3>
+                  <h3 className="text-xl font-bold mb-1">{g.name || "Unnamed Goal"}</h3>
                   <p className="text-zinc-400 text-sm mb-4">
-                    ₹{g.currentAmount.toLocaleString("en-IN")} saved of ₹{g.targetAmount.toLocaleString("en-IN")}
+                    ₹{(g.currentAmount || 0).toLocaleString("en-IN")} saved of ₹{(g.targetAmount || 0).toLocaleString("en-IN")}
                   </p>
 
                   <div className="w-full bg-zinc-800 h-3 rounded-full overflow-hidden mb-2 relative">
