@@ -4,24 +4,27 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+// 5 days in milliseconds
+const SESSION_DURATION_MS = 60 * 60 * 24 * 5 * 1000;
+
 export async function POST(request: Request) {
   try {
     const { token } = await request.json();
-    
-    // Verify the ID token
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    
-    if (!decodedToken) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
 
-    // Set a session cookie
+    // First verify the ID token is valid
+    await adminAuth.verifyIdToken(token);
+
+    // Exchange the short-lived ID token for a long-lived session cookie (5 days)
+    const sessionCookie = await adminAuth.createSessionCookie(token, SESSION_DURATION_MS);
+
+    // Store the session cookie
     const cookieStore = await cookies();
-    cookieStore.set("session", token, {
+    cookieStore.set("session", sessionCookie, {
       path: "/",
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24 * 7, // 1 week
+      maxAge: 60 * 60 * 24 * 5, // 5 days in seconds
+      sameSite: "lax",
     });
 
     return NextResponse.json({ success: true });
@@ -30,3 +33,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to create session" }, { status: 500 });
   }
 }
+

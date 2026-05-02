@@ -52,6 +52,16 @@ export const adminAuth = {
     if (!app) throw new Error("Firebase Admin SDK not initialized. Check your FIREBASE_PRIVATE_KEY.");
     return admin.auth(app).verifyIdToken(token);
   },
+  // Creates a long-lived session cookie (up to 2 weeks) from a short-lived ID token
+  createSessionCookie: async (idToken: string, expiresIn: number) => {
+    if (!app) throw new Error("Firebase Admin SDK not initialized. Check your FIREBASE_PRIVATE_KEY.");
+    return admin.auth(app).createSessionCookie(idToken, { expiresIn });
+  },
+  // Verifies the long-lived session cookie
+  verifySessionCookie: async (sessionCookie: string, checkRevoked = false) => {
+    if (!app) throw new Error("Firebase Admin SDK not initialized. Check your FIREBASE_PRIVATE_KEY.");
+    return admin.auth(app).verifySessionCookie(sessionCookie, checkRevoked);
+  },
   getUser: async (uid: string) => {
     if (!app) throw new Error("Firebase Admin SDK not initialized. Check your FIREBASE_PRIVATE_KEY.");
     return admin.auth(app).getUser(uid);

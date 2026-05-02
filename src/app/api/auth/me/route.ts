@@ -13,7 +13,7 @@ export async function GET() {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const decoded = await adminAuth.verifyIdToken(token);
+    const decoded = await adminAuth.verifySessionCookie(token, true);
     return NextResponse.json({ 
       user: { 
         name: decoded.name || decoded.email?.split("@")[0] || "User", 
