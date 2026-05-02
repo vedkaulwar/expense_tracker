@@ -8,6 +8,7 @@ import TransactionList from "@/components/TransactionList";
 import SmsSimulator from "@/components/SmsSimulator";
 import ExpenseChart from "@/components/ExpenseChart";
 import AddTransactionModal from "@/components/AddTransactionModal";
+import MobileNav from "@/components/MobileNav";
 import * as XLSX from "xlsx";
 import { Plus, Download } from "lucide-react";
 
@@ -96,7 +97,7 @@ export default function Home() {
     <div className="flex min-h-screen bg-[var(--color-background)]">
       <Sidebar />
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pb-24 md:pb-0">
         <div className="max-w-6xl mx-auto p-4 md:p-8">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
@@ -168,6 +169,8 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      <MobileNav />
 
       <AddTransactionModal
         isOpen={isModalOpen}

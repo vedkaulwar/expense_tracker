@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
+import MobileNav from "@/components/MobileNav";
 import { Send, Bot, User } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -40,7 +41,7 @@ export default function ChatPage() {
   return (
     <div className="flex min-h-screen bg-[var(--color-background)]">
       <Sidebar />
-      <main className="flex-1 flex flex-col p-4 md:p-8 h-screen">
+      <main className="flex-1 flex flex-col p-4 md:p-8 h-screen pb-24 md:pb-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Chat with your Money 🤖</h1>
           <p className="text-zinc-400">Powered by Simulated AI</p>
@@ -95,6 +96,7 @@ export default function ChatPage() {
           </form>
         </div>
       </main>
+      <MobileNav />
     </div>
   );
 }
