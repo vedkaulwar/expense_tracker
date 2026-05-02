@@ -150,7 +150,7 @@ export default function SubscriptionsPage() {
                     <td className="px-6 py-4 text-right font-semibold text-white">
                       <div className="flex items-center justify-end gap-3">
                         <span>₹{(sub.amount || 0).toLocaleString("en-IN")}</span>
-                        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
+                        <div className="md:opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity">
                           <button 
                             onClick={() => handleEditSub(sub)}
                             className="p-1.5 text-zinc-400 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-colors"

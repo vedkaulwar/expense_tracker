@@ -89,7 +89,7 @@ export default function GoalsPage() {
                   key={g._id} 
                   className="glass-card rounded-2xl p-6 relative overflow-hidden group"
                 >
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
+                  <div className="absolute top-4 right-4 md:opacity-0 group-hover:opacity-100 flex gap-1 transition-opacity">
                     <button 
                       onClick={() => handleEditGoal(g)}
                       className="p-1.5 text-zinc-400 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-colors"

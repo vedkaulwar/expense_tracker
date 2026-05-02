@@ -107,8 +107,8 @@ export default function TransactionList({
                   {tx.type === "expense" ? "-" : "+"}₹{(tx.amount || 0).toLocaleString("en-IN")}
                 </div>
                 
-                {/* Action Buttons (visible on hover) */}
-                <div className="opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-opacity ml-2">
+                {/* Action Buttons (visible on hover on desktop, always on mobile) */}
+                <div className="md:opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-opacity ml-2">
                   <button 
                     onClick={() => onEdit?.(tx)}
                     className="p-1.5 text-zinc-400 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-colors"
