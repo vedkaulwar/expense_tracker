@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import DashboardStats from "@/components/DashboardStats";
 import TransactionList from "@/components/TransactionList";
@@ -11,6 +12,7 @@ import * as XLSX from "xlsx";
 import { Plus, Download } from "lucide-react";
 
 export default function Home() {
+  const router = useRouter();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,6 +22,10 @@ export default function Home() {
     try {
       setLoading(true);
       const res = await fetch("/api/transactions", { cache: "no-store" });
+      if (res.status === 401) {
+        router.push("/login");
+        return;
+      }
       const data = await res.json();
       if (Array.isArray(data)) {
         setTransactions(data);

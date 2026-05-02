@@ -23,10 +23,12 @@ export default function AddTransactionModal({
   });
   const [isDelayed, setIsDelayed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
     try {
       const payload = {
@@ -34,14 +36,20 @@ export default function AddTransactionModal({
         merchant: formData.merchant || (formData.type === "income" ? "Income Source" : "Unknown Merchant"),
         amount: parseFloat(formData.amount),
         source: "manual",
+        date: new Date().toISOString(),
         status: isDelayed ? "pending_24h_delay" : "completed"
       };
 
-      await fetch("/api/transactions", {
+      const res = await fetch("/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Server error (${res.status}). Are you logged in?`);
+      }
 
       onAdded();
       onClose();
@@ -49,8 +57,9 @@ export default function AddTransactionModal({
         amount: "", merchant: "", category: "Food 🍔", type: "expense", paymentMethod: "UPI", notes: ""
       });
       setIsDelayed(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setError(err.message || "Failed to save transaction.");
     } finally {
       setLoading(false);
     }
@@ -79,6 +88,12 @@ export default function AddTransactionModal({
                 <X size={20} />
               </button>
             </div>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+                ⚠️ {error}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="flex gap-4">
