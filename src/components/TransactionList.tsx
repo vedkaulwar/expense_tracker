@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { Coffee, ShoppingBag, ShoppingCart, Car, Zap, HelpCircle, Clock } from "lucide-react";
+import { Coffee, ShoppingBag, ShoppingCart, Car, Zap, HelpCircle, Clock, Pencil, Trash2 } from "lucide-react";
 
 const getCategoryIcon = (category: string) => {
   if (category.includes("Food")) return <Coffee size={18} className="text-orange-400" />;
@@ -13,7 +13,17 @@ const getCategoryIcon = (category: string) => {
   return <HelpCircle size={18} className="text-zinc-400" />;
 };
 
-export default function TransactionList({ transactions, loading }: { transactions: any[], loading: boolean }) {
+export default function TransactionList({ 
+  transactions, 
+  loading,
+  onEdit,
+  onDelete
+}: { 
+  transactions: any[], 
+  loading: boolean,
+  onEdit?: (tx: any) => void,
+  onDelete?: (id: string) => void
+}) {
   if (loading) {
     return (
       <div className="glass-card rounded-2xl p-6">
@@ -52,7 +62,7 @@ export default function TransactionList({ transactions, loading }: { transaction
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
               key={tx._id || idx}
-              className="flex items-center justify-between p-3 rounded-xl hover:bg-zinc-800/30 transition-colors cursor-pointer group"
+              className="flex items-center justify-between p-3 rounded-xl hover:bg-zinc-800/30 transition-colors group relative"
             >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center">
@@ -77,8 +87,32 @@ export default function TransactionList({ transactions, loading }: { transaction
                 </div>
               </div>
 
-              <div className={`font-semibold flex items-center gap-1 ${tx.type === "expense" ? "text-white" : "text-emerald-500"}`}>
-                {tx.type === "expense" ? "-" : "+"}₹{tx.amount.toLocaleString("en-IN")}
+              <div className="flex items-center gap-4">
+                <div className={`font-semibold flex items-center gap-1 ${tx.type === "expense" ? "text-white" : "text-emerald-500"}`}>
+                  {tx.type === "expense" ? "-" : "+"}₹{tx.amount.toLocaleString("en-IN")}
+                </div>
+                
+                {/* Action Buttons (visible on hover) */}
+                <div className="opacity-0 group-hover:opacity-100 flex items-center gap-2 transition-opacity ml-2">
+                  <button 
+                    onClick={() => onEdit?.(tx)}
+                    className="p-1.5 text-zinc-400 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-colors"
+                    title="Edit transaction"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button 
+                    onClick={() => {
+                      if (confirm("Are you sure you want to delete this transaction?")) {
+                        onDelete?.(tx._id);
+                      }
+                    }}
+                    className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                    title="Delete transaction"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             </motion.div>
           ))

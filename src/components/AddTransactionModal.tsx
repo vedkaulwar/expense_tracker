@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function AddTransactionModal({ 
   isOpen, 
   onClose, 
-  onAdded 
+  onAdded,
+  initialData 
 }: { 
   isOpen: boolean, 
   onClose: () => void,
-  onAdded: () => void
+  onAdded: () => void,
+  initialData?: any
 }) {
   const [formData, setFormData] = useState({
     amount: "",
@@ -25,6 +27,25 @@ export default function AddTransactionModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        amount: initialData.amount.toString(),
+        merchant: initialData.merchant,
+        category: initialData.category,
+        type: initialData.type,
+        paymentMethod: initialData.paymentMethod,
+        notes: initialData.notes || "",
+      });
+      setIsDelayed(initialData.status === "pending_24h_delay");
+    } else {
+      setFormData({
+        amount: "", merchant: "", category: "Food 🍔", type: "expense", paymentMethod: "UPI", notes: ""
+      });
+      setIsDelayed(false);
+    }
+  }, [initialData, isOpen]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -35,13 +56,23 @@ export default function AddTransactionModal({
         ...formData,
         merchant: formData.merchant || (formData.type === "income" ? "Income Source" : "Unknown Merchant"),
         amount: parseFloat(formData.amount),
-        source: "manual",
-        date: new Date().toISOString(),
+        source: initialData ? initialData.source : "manual",
         status: isDelayed ? "pending_24h_delay" : "completed"
       };
 
-      const res = await fetch("/api/transactions", {
-        method: "POST",
+      // Only add date if it's a new transaction (so we don't overwrite the original date)
+      if (!initialData) {
+        (payload as any).date = new Date().toISOString();
+      }
+
+      const url = initialData 
+        ? `/api/transactions/${initialData._id}` 
+        : "/api/transactions";
+        
+      const method = initialData ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
@@ -53,10 +84,6 @@ export default function AddTransactionModal({
 
       onAdded();
       onClose();
-      setFormData({
-        amount: "", merchant: "", category: "Food 🍔", type: "expense", paymentMethod: "UPI", notes: ""
-      });
-      setIsDelayed(false);
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Failed to save transaction.");
@@ -83,7 +110,7 @@ export default function AddTransactionModal({
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-6 z-50 shadow-2xl"
           >
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">Add Transaction</h2>
+              <h2 className="text-xl font-bold">{initialData ? "Edit Transaction" : "Add Transaction"}</h2>
               <button onClick={onClose} className="p-2 hover:bg-zinc-800 rounded-full transition-colors">
                 <X size={20} />
               </button>
@@ -191,7 +218,7 @@ export default function AddTransactionModal({
                 disabled={loading}
                 className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-bold text-lg py-3 rounded-xl mt-4 transition-colors"
               >
-                {loading ? "Saving..." : isDelayed ? "Queue for 24h" : "Save Transaction"}
+                {loading ? "Saving..." : isDelayed ? "Queue for 24h" : initialData ? "Update Transaction" : "Save Transaction"}
               </button>
             </form>
           </motion.div>

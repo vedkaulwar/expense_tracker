@@ -16,6 +16,7 @@ export default function Home() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<any>(null);
   const [userName, setUserName] = useState("there");
 
   const fetchTransactions = async () => {
@@ -49,6 +50,22 @@ export default function Home() {
     } catch {
       // ignore
     }
+  };
+
+  const handleDeleteTransaction = async (id: string) => {
+    try {
+      const res = await fetch(`/api/transactions/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete");
+      setTransactions((prev) => prev.filter(tx => tx._id !== id));
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete transaction.");
+    }
+  };
+
+  const handleEditTransaction = (tx: any) => {
+    setEditingTransaction(tx);
+    setIsModalOpen(true);
   };
 
   const handleExport = () => {
@@ -97,7 +114,10 @@ export default function Home() {
               </button>
 
               <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  setEditingTransaction(null);
+                  setIsModalOpen(true);
+                }}
                 className="bg-emerald-500 hover:bg-emerald-600 text-black font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 transition-colors"
               >
                 <Plus size={20} />
@@ -111,7 +131,12 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
               <SmsSimulator onTransactionAdded={fetchTransactions} />
-              <TransactionList transactions={transactions} loading={loading} />
+              <TransactionList 
+                transactions={transactions} 
+                loading={loading} 
+                onEdit={handleEditTransaction}
+                onDelete={handleDeleteTransaction}
+              />
             </div>
 
             <div className="space-y-6">
@@ -146,8 +171,12 @@ export default function Home() {
 
       <AddTransactionModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingTransaction(null);
+        }}
         onAdded={fetchTransactions}
+        initialData={editingTransaction}
       />
     </div>
   );
